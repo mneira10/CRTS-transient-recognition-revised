@@ -11,10 +11,10 @@ INPUTS_PATH = DATA_PATH + 'inputs/'
 
 
 def load_transient_catalog():
-    filename = 'transient_catalog.pickle'
+    filename = 'transient_catalog.csv'
     indir = DATA_PATH
     filepath = indir + filename
-    df_cat = pd.read_pickle(filepath)
+    df_cat = pd.read_csv(filepath)
     # Rename columns to match light curves
     df_cat = df_cat.rename(
         columns={'TransientID': 'ID', 'Classification': 'class'})
