@@ -1,13 +1,13 @@
 import measurements
 import astropy.time as astime
 
-
 def features(df, num_features):
     '''
     Given a light curve as DataFrame, return all features in dict.
     '''
     df = df.copy()
     df['Flux'] = measurements.__mag_to_flux__(df.Mag)
+    df['Fluxerr'] = measurements.magerr_to_fluxerr(df.Mag,df.Magerr)
     df['Date'] = astime.Time(df.MJD, format='mjd').datetime
     df = df.sort_values('Date')
     feature_dict = dict()
@@ -57,6 +57,12 @@ def features(df, num_features):
     feature_dict['percent_difference_flux_percentile'] = measurements.percent_difference_flux_percentile(
         df.Flux)
 #     feature_dict['linear_trend'] = measurements.linear_trend(df.Flux, df.Date)
+
+
+#   Chi2 additions
+    feature_dict['chi2SALT2'] = measurements.chi2SALT2(df)
+    feature_dict['chi2sGauss'] = measurements.chi2sGauss(df)
+    
     return feature_dict
 
 
@@ -75,5 +81,5 @@ def feature_dict(num_features=21):
         features.extend(['poly1_t1', 'poly2_t2', 'poly2_t1',
                          'poly3_t3', 'poly3_t2', 'poly3_t1'])
     if num_features > 26:
-        features.extend(['poly4_t4', 'poly4_t3', 'poly4_t2', 'poly4_t1'])
+        features.extend(['poly4_t4', 'poly4_t3', 'poly4_t2', 'poly4_t1','chi2SALT2','chi2sGauss'])
     return {k: [] for k in features}

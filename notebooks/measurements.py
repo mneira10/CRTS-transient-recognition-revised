@@ -1,6 +1,9 @@
 import math
 import numpy as np
 import datetime as datetime
+from astropy.table import Table
+import sncosmo
+from lmfit.models import SkewedGaussianModel
 
 def __datetime_diff_to_int_timedelta__(ss_datetime_diff):
     '''
@@ -9,7 +12,12 @@ def __datetime_diff_to_int_timedelta__(ss_datetime_diff):
     return ss_datetime_diff.dt.total_seconds() / 3600
 
 def __mag_to_flux__(ss_mag):
-    return 10. ** (-ss_mag)
+    return 10**((-ss_mag+24.80)/2.5)
+
+def magerr_to_fluxerr(m,sigmaM):
+    dgdm = (np.log(10)*10**((24.80-m)/2.5)/2.5)
+    return (dgdm**2*sigmaM**2)**0.5
+    
 
 def __flux_to_mag__(ss_flux):
     return -np.log10(ss_flux)
@@ -219,3 +227,103 @@ def poly_params(ss_mag, ss_magerr, ss_mjd):
     p3 = np.polyfit(x, y, 3)
     p4 = np.polyfit(x, y, 4)
     return p1, p2, p3, p4
+
+def chi2SALT2(df):
+    # add extra columns needed by sncosmo
+    df = df.copy()
+    
+    df['zp'] = 24.80
+    df['zpsys'] = 'ab'
+    df['band'] = 'sdssr'
+    
+    # rename mjd column to time
+    allCols = list(df.columns)
+    allCols[2] = 'time'
+    df.columns = allCols
+    
+    #remove magnitudes to avoid errors
+    df = df.drop(['Mag','Magerr','Date'],axis=1)
+    
+    #convert to astropy table
+    table = Table.from_pandas(df.reset_index())
+    
+    #create SALT2 model
+    model = sncosmo.Model(source='salt2')
+    
+    #try to fit model to data, else return -100
+#     print(table.columns)
+#     print(table)
+#     print(table['time'])
+#     print(table['Date'])
+    try:
+        res, fitted_model = sncosmo.fit_lc(table, model, ['z', 't0', 'x0', 'x1', 'c'],  bounds={'z':(0.1, 1.3)})
+        return res.chisq
+    
+    except:
+        return -100
+    
+def chi2sGauss(df):
+    
+    # add extra columns needed by sncosmo
+    df = df.copy()
+    
+    df['zp'] = 24.80
+    df['zpsys'] = 'ab'
+    df['band'] = 'sdssr'
+    
+    # rename mjd column to time
+    allCols = list(df.columns)
+    allCols[2] = 'time'
+    df.columns = allCols
+    
+    #remove magnitudes to avoid errors
+    df = df.drop(['Mag','Magerr'],axis=1)
+    
+    #convert to astropy table
+    table = Table.from_pandas(df.reset_index())
+    
+    #try to fit skewed gaussian, else return -100
+    try:
+        return chiGaussianFromTable(table)
+    except:
+        return -100
+    
+def chiGaussianFromTable(table):
+    min_date = min(table["time"])
+    max_date = max(table["time"])
+    
+    data=table
+    
+    x = data["time"]-min_date
+    y = data["Flux"]
+
+
+    max_i = get_max_index(data["Flux"])
+    mean_date = data[max_i]["time"]-min_date
+
+
+    n = len(x)
+    sigma = np.std(y)
+
+    
+    model = SkewedGaussianModel()
+
+    # set initial parameter values
+    params = model.make_params(amplitude=max(y), center=mean_date, sigma=sigma, gamma=1)
+
+    # adjust parameters  to best fit data.
+    result = model.fit(y, params, x=x)
+
+    return result.chisqr
+    
+    
+def get_max_index(fluxes):
+    max_val = 0
+    max_index = -1
+    for i, elem in enumerate(fluxes):
+        
+        if max_val<elem:
+            max_val = elem
+            max_index = i
+            
+    return max_index
