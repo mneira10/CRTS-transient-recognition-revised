@@ -22,7 +22,6 @@ FEATURES_PATH = DATA_PATH + 'features/'
 import numpy as np
 import pandas as pd
 import measurements, extract
-import matplotlib.pyplot as plt
 import inputs2
 from multiprocessing import cpu_count, Pool, current_process
 
@@ -310,15 +309,15 @@ def generate_features(df_all, transient, min_obs):
     
     #execute extraction in parallel
     
-    feats = pd.concat(pool.map(extract_features, dfs))
+    df_feats = pd.concat(pool.map(extract_features, dfs))
     
     pool.close()
     pool.join()
     
 #     return '--------------'
     # Generate features based on light curves in parallel
-    df_feats = extract_features(df_all,obj_type)
-    spl = np.array_split(data, partitions)
+    #df_feats = extract_features(df_all,obj_type)
+    #spl = np.array_split(data, partitions)
 
     
     save_features(df_feats, obj_type)
