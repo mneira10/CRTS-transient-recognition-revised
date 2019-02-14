@@ -247,34 +247,47 @@ def extract_features(df_lcs):
 #             if(current_object_i%int(num_objects/1000) == 0):
             print('Process #:',pid , " ", current_object_i, '/', num_objects)
             # Get current object light curve
+	    print(pid, current_object_i, 'geting object light curve')
             df_object = df_lcs.loc[obj_id,:,num_copy]
 #             print(feats_dict)
 #             break
             # Get features
+	    print(pid,current_object_i,'extracting features...')
             obj_feats = extract.features(df_object, feats_dict)
-            
+            print(pid,current_object_i,'features extracted.')
+
 #             print(obj_feats)
 #             break
             # Append features
+	    print(pid,current_object_i,'appending features')
+
             for k,v in obj_feats.items():
                 feats_dict[k].append(obj_feats[k])
             # Append Indexes
+	    print(pid,current_object_i,'appending indices.')
+
             index_id_list.append(obj_id)
             index_copy_num_list.append(num_copy)
             # Append class and obs_count
-            assert(len(df_object['class'].unique()) == 1)
-            assert(len(df_object['ObsCount'].unique()) == 1)
-            assert(df_object['ObsCount'].unique()[0] == df_object.shape[0])
+            #assert(len(df_object['class'].unique()) == 1)
+            #assert(len(df_object['ObsCount'].unique()) == 1)
+            #assert(df_object['ObsCount'].unique()[0] == df_object.shape[0])
             feats_dict['Class'].append(df_object['class'].unique()[0])
             feats_dict['ObsCount'].append(df_object.shape[0])
-            
+            print(pid,current_object_i,'done with object')
+
+    
+    print(pid, 'finished processing loop.')
     # Create feature dataframe
+    print(pid,'creating feature dataframe')
     df_feats = pd.DataFrame(feats_dict).set_index([index_id_list,index_copy_num_list])
     df_feats.index.names = ['ID', 'copy_num']
     
     # NEED TO SAVE A COPY OF DF JUST IN CASE
+    print(pid, 'saving temporal copy of dataframe')
     outdir = FEATURES_PATH
     df_feats.to_csv(outdir + str(pid) + ".csv")
+    print(pid, 'done with extraction')
     return df_feats
 
 def save_features(df_feats, obj_type):
