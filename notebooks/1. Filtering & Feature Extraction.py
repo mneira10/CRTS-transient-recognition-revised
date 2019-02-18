@@ -257,7 +257,10 @@ def extract_features(df_lcs):
 #             break
             # Get features
             print(pid, current_object_i, 'extracting features...')
-            obj_feats = extract.features(df_object, feats_dict)
+            try: 
+                obj_feats = extract.features(df_object, feats_dict)
+            except:
+                continue
             print(pid, current_object_i, 'features extracted.')
 
 #             print(obj_feats)
