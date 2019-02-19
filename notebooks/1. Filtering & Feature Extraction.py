@@ -247,7 +247,7 @@ def extract_features(df_lcs):
     for num_copy in num_copy_list:
         for i, obj_id in enumerate(unique_ids_list):
             # Print status
-            current_object_i = (num_copy+1)*i
+            current_object_i = (num_copy+1)*(i+1)
 #             if(current_object_i%int(num_objects/1000) == 0):
             print('Process #:', pid, " ", current_object_i, '/', num_objects)
             # Get current object light curve
@@ -259,7 +259,10 @@ def extract_features(df_lcs):
             print(pid, current_object_i, 'extracting features...')
             try: 
                 obj_feats = extract.features(df_object, feats_dict)
-            except:
+            except Exception as e:
+                print(pid, current_object_i, 'Encountered exception:')
+                print(pid, current_object_i, e)
+                print(pid, current_object_i, "continuing loop...")
                 continue
             print(pid, current_object_i, 'features extracted.')
 
