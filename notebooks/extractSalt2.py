@@ -309,6 +309,7 @@ def extractSALT2ForParallel(df_lcs):
 
             # Get features
             print(pid,current_object_i, 'extracting Salt2...')
+            print(pid, 'obj_id: ', obj_id, "num_copy: ",num_copy)
             # print(df_object)
             try:
                 chi2Salt2 = extract.extractSalt2(df_object)
