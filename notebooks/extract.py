@@ -65,6 +65,11 @@ def features(df, num_features):
     
     return feature_dict
 
+def extractSalt2(df):
+    df['Flux'] = measurements.__mag_to_flux__(df.Mag)
+    df['Fluxerr'] = measurements.magerr_to_fluxerr(df.Mag,df.Magerr)
+    df['Date'] = astime.Time(df.MJD, format='mjd').datetime
+    return measurements.chi2SALT2(df)
 
 def feature_dict(num_features=21):
     features = [
