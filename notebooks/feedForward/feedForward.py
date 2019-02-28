@@ -9,7 +9,9 @@ import numpy as np
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+print('Using:',device)
+if device =='cuda':
+    torch.cuda.set_device(1)
 train = ds.dataSet('train',
                    transform=torchvision.transforms.Compose([
                        ds.ToTensor()
@@ -128,8 +130,8 @@ for epoch in range(num_epochs):
 
             correct += (predicted == y).sum().item()
 
-            totPreds = np.concatenate((totPreds,predicted.numpy()))
-            totLabels = np.concatenate((totLabels,y.numpy()))
+            totPreds = np.concatenate((totPreds,predicted.cpu().numpy()))
+            totLabels = np.concatenate((totLabels,y.cpu().numpy()))
             # pdb.set_trace()
 
         precision,recall,fscore,coverage = precision_recall_fscore_support(totLabels, totPreds)
