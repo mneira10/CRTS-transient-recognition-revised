@@ -9,17 +9,19 @@ import numpy as np
 
 # Device configuration
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print('Using:',device)
-if device =='cuda':
+print('Using:', device)
+if device == 'cuda':
     torch.cuda.set_device(1)
+
+# Load Data
 train = ds.dataSet('train',
                    transform=torchvision.transforms.Compose([
                        ds.ToTensor()
                    ]))
 test = ds.dataSet('test',
-                   transform=torchvision.transforms.Compose([
-                       ds.ToTensor()
-                   ]))
+                  transform=torchvision.transforms.Compose([
+                      ds.ToTensor()
+                  ]))
 
 # Hyper-parameters
 input_size = train.input_size()
@@ -30,6 +32,8 @@ batch_size = 100
 learning_rate = 0.00001
 
 
+# Data loaders
+
 dataloader = torch.utils.data.DataLoader(train, batch_size=batch_size,
                                          shuffle=True)
 
@@ -37,6 +41,8 @@ testLoader = torch.utils.data.DataLoader(test, batch_size=batch_size,
                                          shuffle=True)
 
 # Fully connected neural network with one hidden layer
+
+
 class NeuralNet(nn.Module):
     def __init__(self, input_size, hidden_size, num_classes):
         super(NeuralNet, self).__init__()
@@ -61,8 +67,12 @@ model = model.double()
 criterion = nn.CrossEntropyLoss()
 # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 # optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9)
-optimizer = torch.optim.SGD(model.parameters(), lr = learning_rate, momentum = 0.9, weight_decay = 1e-4)
+optimizer = torch.optim.SGD(
+    model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=1e-4)
 # optim_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, 10, 0.989)
+
+
+test_scores = []
 
 
 # Train the mode
@@ -71,14 +81,14 @@ for epoch in range(num_epochs):
     tot_correct = 0
     total = 0
     for i, sample_batched in enumerate(dataloader):
+
         # Move tensors to the configured device
         x = sample_batched['features']
         y = sample_batched['label']
-        # x,y = sample_batched_x,sample_batched_y
 
         x = x.to(device)
         y = y.to(device)
-        
+
         # zero the parameter gradients
         optimizer.zero_grad()
 
@@ -91,19 +101,21 @@ for epoch in range(num_epochs):
 
         tot_correct += (predicted == y).sum().item()
 
-
         loss = criterion(outputs, y)
         loss.backward()
         optimizer.step()
-        # print(x.size(0))
-        # print statistics
-        running_loss += loss.item()*x.size(0)
         
-    print("Epoch {} Loss {}".format(epoch,running_loss/len(dataloader)))
-    print("Epoch {} Acca {}".format(epoch,tot_correct/total))
+        running_loss += loss.item()*x.size(0)
+
+
+    epochLoss =running_loss/len(dataloader)
+    print("Epoch {} Loss {}".format(epoch,epochLoss))
+    print("Epoch {} Acca {}".format(epoch, tot_correct/total))
 
     
-
+    f= open("trainLoss.dat","a")
+    f.write(str(epoch)+" "+ str(epochLoss)+'\n')
+    f.close()
 
     # Test the model
     # In test phase, we don't need to compute gradients (for memory efficiency)
@@ -114,11 +126,11 @@ for epoch in range(num_epochs):
         totPreds = np.array([])
         totLabels = np.array([])
 
-        # for x, y in testLoader:
+        #iterate through test data
         for i, sample_batched in enumerate(testLoader):
             x = sample_batched['features']
             y = sample_batched['label']
-            
+
             x = x.to(device)
             y = y.to(device)
 
@@ -126,18 +138,20 @@ for epoch in range(num_epochs):
 
             _, predicted = torch.max(outputs.data, 1)
 
-            total += y.size(0)
+            
 
-            correct += (predicted == y).sum().item()
-
-            totPreds = np.concatenate((totPreds,predicted.cpu().numpy()))
-            totLabels = np.concatenate((totLabels,y.cpu().numpy()))
+            totPreds = np.concatenate((totPreds, predicted.cpu().numpy()))
+            totLabels = np.concatenate((totLabels, y.cpu().numpy()))
             # pdb.set_trace()
 
-        precision,recall,fscore,coverage = precision_recall_fscore_support(totLabels, totPreds)
-        print('Precision: {:.2f} Recall:{:.2f} Fscore: {:.2f} Coverage: {}'.format(precision[1],recall[1],fscore[1],coverage[1]))
-        # print(scores)
-        print('Acca test set: {:.2f} %'.format(100 * correct / total))
+        precision, recall, fscore, coverage = precision_recall_fscore_support(
+            totLabels, totPreds)
+        print('Precision: {:.2f} Recall:{:.2f} Fscore: {:.2f} Coverage: {}'.format(
+            precision[1], recall[1], fscore[1], coverage[1]))
+
+        f= open("testLoss.dat","a")
+        f.write(str(epoch)+" " +str(precision[1])+" "+str(recall[1])+" "+str(fscore[1])+'\n')
+        f.close()
 
     model = model.train()
 # Save the model checkpoint
