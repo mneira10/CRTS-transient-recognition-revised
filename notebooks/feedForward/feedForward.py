@@ -27,7 +27,7 @@ test = ds.dataSet('test',
 input_size = train.input_size()
 hidden_size = 500
 num_classes = 2
-num_epochs = 20
+num_epochs = 100
 batch_size = 100
 learning_rate = 0.00001
 
