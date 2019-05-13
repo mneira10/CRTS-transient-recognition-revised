@@ -1,57 +1,49 @@
 import pickle
-import pandas as pd 
+import pandas as pd
 import json
 import torch
 import numpy as np
 from torchvision import transforms
 import pdb
 
+
 class dataSet():
-    """Face Landmarks dataset."""
 
-    def __init__(self, dataset,transform=None):
-      with open('config.json') as f:
-        config = json.load(f)
-      
-      dataPath = config['dataPath']
+    def __init__(self, dataset, transform=None):
+        with open('config.json') as f:
+            config = json.load(f)
 
-      
-      self.data = pickle.load( open( dataPath+dataset+'.pkl', "rb" ) )
-      self.data = self.data.sample(frac = 1)
-      
-      self.data  =  self.data.drop('Class',axis=1) 
-      self.data  =  self.data.drop('ObsCount',axis=1) 
-      self.data  =  self.data.reset_index()
+        dataPath = config['dataPath']
 
-      self.transform = transform
-      
+        self.data = pickle.load(open(dataPath+dataset+'.pkl', "rb"))
+        self.data = self.data.sample(frac=1)
+
+        self.data = self.data.drop('Class', axis=1)
+        self.data = self.data.drop('ObsCount', axis=1)
+        self.data = self.data.reset_index()
+
+        print(self.data.columns)
+
+        self.transform = transform
+
     def __len__(self):
-      return len(self.data) 
+        return len(self.data)
 
     def __getitem__(self, idx):
 
-      x = np.array((self.data.iloc[idx][2:-1].values),dtype=float)
-      # x = np.expand_dims(x,axis=0)
-      
-      #y = np.array([self.data.iloc[idx]['target']],dtype = int)
-      
-      y = int(self.data.iloc[idx]['target'])
+        x = np.array((self.data.iloc[idx][2:-1].values), dtype=float)
 
-      #  y = self.data.iloc[idx]['target']
-      # yout = np.zeros(2,dtype=int)
-      # yout[y]+=1
+        y = int(self.data.iloc[idx]['target'])
 
-      sample = {'features':x,'label':y}
+        sample = {'features': x, 'label': y}
 
-      # pdb.set_trace()
-      if self.transform:
+        if self.transform:
             sample = self.transform(sample)
 
-
-      return sample
+        return sample
 
     def input_size(self):
-      return len(self.data.columns)-3
+        return len(self.data.columns)-3
 
 
 class ToTensor(object):
