@@ -88,27 +88,27 @@ def splitTrainTest(classificationProblem):
 
         TTest = pd.DataFrame()
 
-        # --------------------------------------
-        # get least represented class
+        # # --------------------------------------
+        # # get least represented class
 
-        minNum = 80000000
+        # minNum = 80000000
 
-        for l in transientLabels:
-            numL = manualFact(l)
+        # for l in transientLabels:
+        #     numL = manualFact(l)
 
-            classDf = T[T['Class'] == numL]
-            assert len(classDf.Class.unique()) == 1
-            uniqueIDs = classDf.index.get_level_values('ID').unique()
+        #     classDf = T[T['Class'] == numL]
+        #     assert len(classDf.Class.unique()) == 1
+        #     uniqueIDs = classDf.index.get_level_values('ID').unique()
 
-            numUniqueIds = len(uniqueIDs)
+        #     numUniqueIds = len(uniqueIDs)
 
-            if numUniqueIds < minNum:
-                print(l, 'has fewer unique Ids with',
-                      numUniqueIds, numUniqueIds*0.25)
-                minNum = numUniqueIds
+        #     if numUniqueIds < minNum:
+        #         print(l, 'has fewer unique Ids with',
+        #               numUniqueIds, numUniqueIds*0.25)
+        #         minNum = numUniqueIds
 
-        print('minimum number of class ids: {}'.format(minNum))
-        # --------------------------------------
+        # print('minimum number of class ids: {}'.format(minNum))
+        # # --------------------------------------
 
         for label in ['SN', 'CV', 'AGN', 'HPM', 'Blazar',
                       'Flare', 'Other']:
@@ -125,7 +125,7 @@ def splitTrainTest(classificationProblem):
 
             # get test ids
             TTestClassIds = np.random.choice(
-                TclassUniqueIds, int(minNum*0.25), replace=False)
+                TclassUniqueIds, int(len(TclassUniqueIds)*0.25), replace=False)
 
             # get test df for class
             TTestClassDf = \
@@ -135,7 +135,7 @@ def splitTrainTest(classificationProblem):
                     (TclassDf.index.get_level_values('copy_num') == 0)
                 ]
 
-            assert len(TTestClassDf) == int(minNum*0.25)
+            assert len(TTestClassDf) == int(len(TclassUniqueIds)*0.25)
             # append to test df
             TTest = pd.concat([TTest, TTestClassDf])
 

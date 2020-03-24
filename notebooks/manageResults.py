@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import confusion_matrix
 
 
 def shorten(x):
@@ -72,3 +73,39 @@ def plotFeatImportances(clf, features, savePath):
     plt.title("Binary Classification")
     plt.savefig(savePath)
     plt.close()
+
+
+def genMetricsAndCM(testData, clf, features, completeSavePath, allResultsFilePath, problemType, classifierName, featureName):
+    confMatr = confusion_matrix(testData.Class, clf.predict(
+        testData[features])).transpose()
+
+    def fMeasure(precision, recall):
+        return 2*precision*recall/(precision+recall)
+
+    file = open(completeSavePath, 'w')
+    file.write('Precision,Recall,F-score,Cover\n')
+
+    newMatr = []
+    for i in range(len(confMatr)):
+        prec = confMatr[i][i]/(sum(confMatr[i, :]))
+        rec = confMatr[i][i]/(sum(confMatr[:, i]))
+        newMatr.append([prec, rec, fMeasure(prec, rec), sum(confMatr[:, i])])
+        file.write(str(prec)+',' +
+                   str(rec) + ',' +
+                   str(fMeasure(prec, rec)) + ',' +
+                   str(sum(confMatr[:, i])) +
+                   '\n')
+    file.close()
+
+    newMatr = np.array(newMatr)
+
+    avePrec = np.average(newMatr[:, 0])
+    aveRec = np.average(newMatr[:, 1])
+    aveF1 = np.average(newMatr[:, 2])
+
+    file = open(allResultsFilePath, 'a')
+    # problem, classifier, features, prec, rec, f1
+    file.write('{},{},{},{},{},{}\n'.format(
+        problemType, classifierName, featureName, avePrec, aveRec, aveF1))
+
+    file.close()
