@@ -353,3 +353,16 @@ def lombScargle(df):
     frequency, power = LombScargle(df.MJD, df.Mag,df.Magerr).autopower()
     max_frequency = frequency[np.argmax(power)]
     return 1/max_frequency
+
+def rcb(df):
+    '''
+        rcb = P (mag > (median(mag) + 1.5))
+        as taken from D'Isanto et al 2016
+    '''
+    median = df.Mag.median()
+    
+    threshold = median+1.5
+    
+    ans = len(df[df.Mag>threshold])/len(df) # number between 0.5 and 0 
+    
+    return ans

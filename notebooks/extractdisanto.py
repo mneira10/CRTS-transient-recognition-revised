@@ -66,6 +66,7 @@ def features(df, num_features):
 # disanto features 
     feature_dict['magnitudeRatio'] = measurements.magnitudeRatio(df)
     feature_dict['lombScargle'] = measurements.lombScargle(df)
+    feature_dict['rcb'] = measurements.rcb(df)
     
     return feature_dict
 
@@ -90,5 +91,5 @@ def feature_dict(num_features=21):
         features.extend(['poly1_t1', 'poly2_t2', 'poly2_t1',
                          'poly3_t3', 'poly3_t2', 'poly3_t1'])
     if num_features > 26:
-        features.extend(['poly4_t4', 'poly4_t3', 'poly4_t2', 'poly4_t1','magnitudeRatio','lombScargle'])
+        features.extend(['poly4_t4', 'poly4_t3', 'poly4_t2', 'poly4_t1','magnitudeRatio','lombScargle','rcb'])
     return {k: [] for k in features}
