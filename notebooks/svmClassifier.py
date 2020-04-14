@@ -1,10 +1,10 @@
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.svm import SVC
 from sklearn.metrics import make_scorer, accuracy_score, precision_score
 from sklearn.metrics import recall_score, f1_score
 from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
 
-class RFClassifier:
+class SVMClassifier:
 
     def __init__(self, trainData, testData, hyperparameters, features):
         self.trainData = trainData
@@ -12,15 +12,29 @@ class RFClassifier:
         self.hypermarameters = hyperparameters
         self.features = features
         self.trainedClasifier = None
+        self.trainDataMeans = None
+        self.trainDataStds = None
+        self.testNormalized = False
 
     def getClassifierType(self):
-        return 'RF'
+        return 'SVM'
 
     def checkModelIsTrained(self):
         if self.trainedClasifier is None:
             raise Exception('The model has not been trained yet!!')
 
+    def calcTrainStats(self):
+        self.trainDataMeans = self.trainData[self.features].mean()
+        self.trainDataStds = self.trainData[self.features].std()
+
     def train(self):
+
+        # normalize input
+        # all columns are numeric values
+        # only need to do standard normalization for every column
+        self.calcTrainStats()
+        self.trainData[self.features] = (
+            self.trainData[self.features]-self.trainDataMeans)/self.trainDataStds
 
         # metrics to be analized
 
@@ -33,7 +47,7 @@ class RFClassifier:
             return scoring
 
         # learning
-        model = RandomForestClassifier(random_state=0, class_weight='balanced')
+        model = SVC(random_state=0, class_weight='balanced')
         grid_search = GridSearchCV(model,
                                    self.hypermarameters,
                                    cv=StratifiedKFold(2),
@@ -57,5 +71,16 @@ class RFClassifier:
     def predict(self):
 
         self.checkModelIsTrained()
-        
+
+        # in case the train data mean and std
+        # hasnt been calculated yet
+        if self.trainDataMeans is None:
+            self.calcTrainStats()
+
+        # normalize the test set once
+        if not self.testNormalized:
+            self.testData[self.features] = (
+                self.testData[self.features]-self.trainDataMeans)/self.trainDataStds
+            self.testNormalized = True
+
         return self.trainedClasifier.predict(self.testData[self.features])

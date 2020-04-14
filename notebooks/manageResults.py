@@ -75,9 +75,8 @@ def plotFeatImportances(clf, features, savePath):
     plt.close()
 
 
-def genMetricsAndCM(testData, clf, features, completeSavePath, allResultsFilePath, problemType, classifierName, featureName):
-    confMatr = confusion_matrix(testData.Class, clf.predict(
-        testData[features])).transpose()
+def genMetricsAndCM(testData, clf, completeSavePath, allResultsFilePath, problemType, featureName):
+    confMatr = confusion_matrix(testData.Class, clf.predict()).transpose()
 
     def fMeasure(precision, recall):
         return 2*precision*recall/(precision+recall)
@@ -106,6 +105,6 @@ def genMetricsAndCM(testData, clf, features, completeSavePath, allResultsFilePat
     file = open(allResultsFilePath, 'a')
     # problem, classifier, features, prec, rec, f1
     file.write('{},{},{},{},{},{}\n'.format(
-        problemType, classifierName, featureName, avePrec, aveRec, aveF1))
+        problemType, clf.getClassifierType(), featureName, avePrec, aveRec, aveF1))
 
     file.close()
