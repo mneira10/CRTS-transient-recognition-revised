@@ -3,7 +3,7 @@ import numpy as np
 
 
 def loadData():
-    DATA_PATH = '../data/features/newNegs/'
+    DATA_PATH = '../data/features/newNegsTrueSet/'
     negsFilePath = 'new_NT.csv'
     transientsFilePath = 'T.csv'
 
@@ -53,27 +53,45 @@ def splitTrainTest(classificationProblem):
         T['Class'] = 1
         NT['Class'] = 0
 
-        # split into train and test
-        uniqueTIds = T.index.get_level_values('ID').unique()
+        # see which df is the smallest
 
-        testTIds = np.random.choice(
-            uniqueTIds, int(len(uniqueTIds)*0.25), replace=False)
+        small = T if T.shape[0] < NT.shape[0] else NT
+        big = NT if T.shape[0] < NT.shape[0] else T
+
+        # split into train and test
+        uniqueSmallIds = small.index.get_level_values('ID').unique()
+
+        testSmallIds = np.random.choice(
+            uniqueSmallIds, int(len(uniqueSmallIds)*0.25), replace=False)
 
         # remove oversamples from test set
-        TTest = T[(T.index.get_level_values('ID').isin(testTIds))
-                  & (T.index.get_level_values('copy_num') == 0)]
+        smallTest = small[(small.index.get_level_values('ID').isin(testSmallIds))
+                          & (small.index.get_level_values('copy_num') == 0)]
 
-        TTrain = T[~T.index.get_level_values('ID').isin(testTIds)]
+        smallTrain = small[~small.index.get_level_values(
+            'ID').isin(testSmallIds)]
 
-        TTest['set'] = 'test'
-        TTrain['set'] = 'train'
+        smallTest['set'] = 'test'
+        smallTrain['set'] = 'train'
 
         # randomly get the same number of samples in train set
         # no copies here, no need to get uniques
-        NTIds = NT.index.get_level_values('ID')
+        bigIds = big.index.get_level_values('ID')
 
-        NTTrainIDs = np.random.choice(
-            NTIds, len(TTrain), replace=False)
+        bigTrainIDs = np.random.choice(
+            bigIds, len(smallTrain), replace=False)
+
+        bigTrain = big[big.index.get_level_values('ID').isin(bigTrainIDs)].sample(n=len(smallTrain), replace=False)
+        bigTest = big[(~big.index.get_level_values('ID').isin(bigTrainIDs)) & (
+            big.index.get_level_values('copy_num') == 0)]
+
+        bigTrain['set'] = 'train'
+        bigTest['set'] = 'test'
+
+        train = pd.concat([smallTrain, bigTrain]).sample(frac=1)
+        test = pd.concat([smallTest, bigTest]).sample(frac=1)
+
+        return test, train
 
     elif classificationProblem == '8class':
         # 8 class classification problem
@@ -142,7 +160,8 @@ def splitTrainTest(classificationProblem):
         tempTTrain = T[~T.index.get_level_values(
             'ID').isin(TTest.index.get_level_values('ID'))]
 
-        assert tempTTrain.index.get_level_values('ID').isin(TTest.index.get_level_values('ID')).sum() ==0
+        assert tempTTrain.index.get_level_values('ID').isin(
+            TTest.index.get_level_values('ID')).sum() == 0
 
         minLcCount = tempTTrain.groupby('Class').count()['amplitude'].min()
 
@@ -167,14 +186,13 @@ def splitTrainTest(classificationProblem):
         NTTrainIDs = np.random.choice(
             NTIds, minLcCount, replace=False)
 
-    NTTrain = NT[NT.index.get_level_values('ID').isin(NTTrainIDs)]
-    NTTest = NT[~NT.index.get_level_values('ID').isin(NTTrainIDs)]
+        NTTrain = NT[NT.index.get_level_values('ID').isin(NTTrainIDs)]
+        NTTest = NT[~NT.index.get_level_values('ID').isin(NTTrainIDs)]
 
-    NTTrain['set'] = 'train'
-    NTTest['set'] = 'test'
+        NTTrain['set'] = 'train'
+        NTTest['set'] = 'test'
 
-    train = pd.concat([TTrain, NTTrain]).sample(frac=1)
-    test = pd.concat([TTest, NTTest]).sample(frac=1)
+        train = pd.concat([TTrain, NTTrain]).sample(frac=1)
+        test = pd.concat([TTest, NTTest]).sample(frac=1)
 
-    return test, train
-
+        return test, train

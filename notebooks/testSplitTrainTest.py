@@ -19,6 +19,14 @@ class TestSplitTrainTest(unittest.TestCase):
             assert len(train1[train1.Class == l]) == numExamplesInTrainPerClass, '''minNum {} label {} had {} '''.format(
                 numExamplesInTrainPerClass, l, len(train1[train1.Class == l]))
 
+    def test_binNonEmptyTestSet(self):
+        test1, train1 = splitTrainTest('binary')
+
+        assert len(test1.Class.unique()) == 2, 'There are not 2 labels in the test set'
+
+        for l in test1.Class.unique():
+            assert len(test1[test1.Class == l]) > 0, '''Label {} is empty in the test set '''.format(l)
+
     def test_binTraInNotInTestAndViceVersa(self):
         test1, train1 = splitTrainTest('binary')
 
