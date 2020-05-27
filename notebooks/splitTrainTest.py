@@ -53,11 +53,15 @@ def splitTrainTest(classificationProblem):
         T['Class'] = 1
         NT['Class'] = 0
 
+        print('binary case, NT: {} T {}'.format(NT.shape[0],T[T.index.get_level_values('copy_num')==0].shape[0]))
+
         # see which df is the smallest
 
-        small = T if T.shape[0] < NT.shape[0] else NT
-        big = NT if T.shape[0] < NT.shape[0] else T
-
+        small = T if T[T.index.get_level_values('copy_num')==0].shape[0] < NT.shape[0] else NT
+        big = NT if T[T.index.get_level_values('copy_num') == 0].shape[0]< NT.shape[0] else T
+        
+        assert T[T.index.get_level_values('copy_num')==0].shape[0] == len(T.index.get_level_values('ID').unique())
+        
         # split into train and test
         uniqueSmallIds = small.index.get_level_values('ID').unique()
 
@@ -76,14 +80,27 @@ def splitTrainTest(classificationProblem):
 
         # randomly get the same number of samples in train set
         # no copies here, no need to get uniques
+        bigTest = big.sample(n=int(len(big)*0.25), replace = False)
+        
         bigIds = big.index.get_level_values('ID')
 
-        bigTrainIDs = np.random.choice(
-            bigIds, len(smallTrain), replace=False)
+        assert len(bigIds)==len(big)
 
-        bigTrain = big[big.index.get_level_values('ID').isin(bigTrainIDs)].sample(n=len(smallTrain), replace=False)
-        bigTest = big[(~big.index.get_level_values('ID').isin(bigTrainIDs)) & (
-            big.index.get_level_values('copy_num') == 0)]
+
+        bigTrain = big[~big.index.get_level_values('ID').isin(bigTest.index.get_level_values('ID'))] #np.random.choice(
+            #bigIds, min(len(smallTrain),len(bigIds)), replace=False)
+
+        print('the minimum: {} lensmallTrain {} lenbigids {}'.format(min(len(smallTrain),len(bigTrain)),len(smallTrain),len(bigTrain)))
+        
+        smallTrain = smallTrain.sample(n=min(len(smallTrain),len(bigTrain)), replace=False)
+        bigTrain = bigTrain.sample(n=min(len(smallTrain),len(bigTrain)),replace=False)
+
+        print('the minimum: {} lensmallTrain {} lenbigids {}'.format(min(len(smallTrain),len(bigTrain)),len(smallTrain),len(bigTrain)))
+
+
+        #bigTrain = big[big.index.get_level_values('ID').isin(bigTrainIDs)].sample(n=len(smallTrain), replace=False) # sampling here is to mix up samples
+        #bigTest = big[(~big.index.get_level_values('ID').isin(bigTrainIDs)) & (
+         #   big.index.get_level_values('copy_num') == 0)]
 
         bigTrain['set'] = 'train'
         bigTest['set'] = 'test'

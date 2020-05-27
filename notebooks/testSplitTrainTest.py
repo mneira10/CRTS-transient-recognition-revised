@@ -22,7 +22,7 @@ class TestSplitTrainTest(unittest.TestCase):
     def test_binNonEmptyTestSet(self):
         test1, train1 = splitTrainTest('binary')
 
-        assert len(test1.Class.unique()) == 2, 'There are not 2 labels in the test set'
+        assert len(test1.Class.unique()) == 2, 'There are not 2 labels in the test set: {}'.format(test1.Class.unique())
 
         for l in test1.Class.unique():
             assert len(test1[test1.Class == l]) > 0, '''Label {} is empty in the test set '''.format(l)
